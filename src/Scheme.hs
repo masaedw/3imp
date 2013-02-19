@@ -3,6 +3,7 @@
 module Scheme where
 
 import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as BC -- needed by pattern match
 
 -- a: the accumulator
 -- x: the next expression

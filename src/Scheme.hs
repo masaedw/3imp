@@ -1,4 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
+
+module Scheme where
+
 import Data.ByteString (ByteString)
 
 -- a: the accumulator

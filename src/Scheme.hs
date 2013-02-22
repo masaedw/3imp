@@ -4,12 +4,7 @@ module Scheme where
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BC -- needed by pattern match
-
--- a: the accumulator
--- x: the next expression
--- e: the current environment
--- r: the current value rib
--- s: the current stack
+import Prelude hiding (lookup)
 
 data Object = SDouble Double
             | SInteger Integer
@@ -38,7 +33,7 @@ data AssemblyCode = AHalt
                   | ATest AssemblyCode AssemblyCode
                   | AAssign Variable AssemblyCode
                   | AConti AssemblyCode
-                  | ANuate StackValue AssemblyCode
+                  | ANuate [StackValue] Variable
                   | AFrame AssemblyCode AssemblyCode
                   | AArgument AssemblyCode
                   | Apply
@@ -71,3 +66,65 @@ compile (EList (x:xs)) next = loop xs $ compile x Apply
                 then c
                 else AFrame next c
     loop (a:as) c = loop as $ compile a $ AArgument c
+
+
+data Environment = Env -- ??
+                 deriving (Show)
+
+type Rib = [Expression]
+
+-- a: the accumulator
+-- x: the next expression
+-- e: the current environment
+-- r: the current valur rib
+-- s: the current stack
+
+vm :: Expression -> AssemblyCode -> Environment -> Rib -> [StackValue] -> Expression
+vm a x e r s =
+  case x of
+    AHalt -> a
+    ARefer var x' -> vm a' x' e r s
+      where a' = lookup var e
+    AConstant obj x' -> vm obj x' e r s
+    AClose vars body x' -> vm a' x' e r s
+      where a' = closure body e vars
+    ATest tcase fcase -> vm a x' e r s
+      where x' = sif a tcase fcase
+    AAssign var x' -> vm a x' e' r s
+      where e' = insert var e a
+    AConti x' -> vm a' x e r s
+      where a' = continuation s
+    ANuate s' var -> vm a' x' e r s'
+      where a' = lookup var e
+            x' = Return
+    AFrame ret x' -> vm a x' e r' s'
+      where r' = []
+            s' = callFrame ret e r s
+    AArgument x' -> vm a x' e (a:r) s
+    Apply -> let EList (body:e:vars) = a
+             in
+              vm a body
+    Return -> undefined
+
+lookup :: Variable -> Environment -> Expression
+lookup = undefined
+
+insert :: Variable -> Environment -> Expression -> Environment
+insert = undefined
+
+closure :: AssemblyCode -> Environment -> [Variable] -> Expression
+closure = undefined
+
+sif :: Expression -> a -> a -> a
+sif a tcase fcase = if isTrueOfScheme a
+                    then tcase
+                    else fcase
+
+isTrueOfScheme :: Expression -> Bool
+isTrueOfScheme = undefined
+
+continuation :: [StackValue] -> Expression
+continuation = undefined
+
+callFrame :: AssemblyCode -> Environment -> Rib -> [StackValue] -> [StackValue]
+callFrame = undefined
